@@ -1,0 +1,202 @@
+:root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --secondary: #64748b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+.mobile-container {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 20px;
+    padding-bottom: 50px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.user-badge {
+    background: white;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+/* Main Status Card */
+.main-card {
+    background: var(--card-bg);
+    padding: 30px 20px;
+    border-radius: 28px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    border: 1px solid #f1f5f9;
+    margin-bottom: 20px;
+}
+
+.timer-display {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin: 15px 0;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+    letter-spacing: -2px;
+}
+
+/* Forms & Inputs */
+select, input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 15px;
+    font-size: 15px;
+    background: #f1f5f9;
+    outline: none;
+    transition: all 0.2s;
+}
+
+select:focus, input:focus {
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+/* Buttons */
+.btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 18px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+
+.btn-outline { background: white; color: var(--text-main); border: 1px solid #e2e8f0; }
+
+.btn-danger { background: var(--danger); color: white; }
+
+.btn-warning { background: var(--warning); color: white; }
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Manual Form */
+.manual-form {
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 24px;
+    margin-top: 15px;
+    border: 2px dashed #cbd5e1;
+    display: none;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.show-form { display: block !important; }
+
+/* History Section */
+.history-section { margin-top: 35px; }
+
+.filter-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding: 5px 2px;
+    scrollbar-width: none;
+}
+
+.filter-btn {
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: none;
+    background: #f1f5f9;
+    color: var(--text-muted);
+    transition: 0.2s;
+}
+
+.filter-btn.active {
+    background: var(--text-main);
+    color: white;
+}
+
+.history-card {
+    background: white;
+    padding: 18px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #f1f5f9;
+    transition: 0.2s;
+}
+
+.history-card:hover { border-color: var(--primary); }
+
+.history-info h4 { font-size: 15px; font-weight: 700; color: var(--text-main); }
+.history-info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.duration-tag {
+    background: #eef2ff;
+    color: var(--primary);
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 13px;
+}

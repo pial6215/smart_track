@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Smart Tracker</title>
+    <link rel="stylesheet" href="{% static 'tracker/css/style.css' %}">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+    <div class="mobile-container" style="display: flex; flex-direction: column; justify-content: center;">
+        <div class="main-card" style="padding: 40px 30px;">
+            <h1 style="color: var(--primary); margin-bottom: 10px;">Smart Tracker</h1>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">Login to start your shift</p>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit" class="btn btn-primary">LOGIN</button>
+                <p style="margin-top: 20px; font-size: 14px; color: #6b7280;">
+    Don't have an account? <a href="{% url 'signup' %}" style="color: #4f46e5; font-weight: bold; text-decoration: none;">Create one</a>
+</p>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
