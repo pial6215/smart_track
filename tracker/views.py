@@ -26,29 +26,25 @@ def dashboard(request):
 
     history = Attendance.objects.filter(query).order_by('-check_in')
 
-    # --- TOTAL SUMMARY CALCULATION START ---
+  # --- TOTAL SUMMARY CALCULATION START ---
+total_active_seconds = 0
+for item in history:
+    if item.check_in and item.check_out:
+     
+        duration = (item.check_out - item.check_in).total_seconds()
+        
+        net_seconds = duration - item.total_break_seconds
+        
+        if net_seconds > 0:
+            total_active_seconds += net_seconds
+
+if total_active_seconds < 0:
     total_active_seconds = 0
-    for item in history:
-        if item.check_in and item.check_out:
-            # Mot somoy (Checkout - Checkin)
-            duration = (item.check_out - item.check_in).total_seconds()
-            # Break bad diye active somoy
-            total_active_seconds += (duration - item.total_break_seconds)
 
-    total_hours = int(total_active_seconds // 3600)
-    total_minutes = int((total_active_seconds % 3600) // 60)
-    summary_text = f"{total_hours}h {total_minutes}m"
-    # --- TOTAL SUMMARY CALCULATION END ---
-
-    context = {
-        'active_attendance': active_attendance,
-        'sites': sites,
-        'history': history,
-        'current_filter': filter_type,
-        'total_summary': summary_text, # Template e summary pathalam
-    }
-    return render(request, 'tracker/dashboard.html', context)
-
+total_hours = int(total_active_seconds // 3600)
+total_minutes = int((total_active_seconds % 3600) // 60)
+summary_text = f"{total_hours}h {total_minutes}m"
+# --- TOTAL SUMMARY CALCULATION END ---
 @login_required
 def check_in(request):
     if request.method == 'POST':
