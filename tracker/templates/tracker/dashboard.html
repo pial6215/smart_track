@@ -44,7 +44,7 @@
 </div>
 
     <div class="main-card">
-        {% if not active_attendance %}
+        {% if not active_record %}
             <h3 style="margin-bottom: 15px;">Start New Shift</h3>
             <form action="{% url 'check_in' %}" method="POST">
                 {% csrf_token %}
@@ -57,17 +57,17 @@
                 <button type="submit" class="btn btn-primary shadow-lg">CHECK IN</button>
             </form>
         {% else %}
-            <p style="color: #6b7280; font-size: 14px;">Currently at: <b>{{ active_attendance.site.name }}</b></p>
+            <p style="color: #6b7280; font-size: 14px;">Currently at: <b>{{ active_record.site.name }}</b></p>
             
             <div class="timer-display" id="live-timer">
-                {% if active_attendance.break_start %} PAUSED {% else %} 00:00:00 {% endif %}
+                {% if active_record.break_start %} PAUSED {% else %} 00:00:00 {% endif %}
             </div>
             
             <div class="grid" style="margin-bottom: 15px;">
                 <form action="{% url 'toggle_break' %}" method="POST">
                     {% csrf_token %}
-                    <button type="submit" class="btn {% if active_attendance.break_start %}btn-warning{% else %}btn-outline{% endif %}">
-                        {% if active_attendance.break_start %}End Break{% else %}Take Break{% endif %}
+                    <button type="submit" class="btn {% if active_record.break_start %}btn-warning{% else %}btn-outline{% endif %}">
+                        {% if active_record.break_start %}End Break{% else %}Take Break{% endif %}
                     </button>
                 </form>
 
@@ -148,10 +148,11 @@
 </div>
 
 <script src="{% static 'tracker/js/script.js' %}"></script>
-
-{% if active_attendance and not active_attendance.break_start %}
+{% if active_record and not active_record.break_start %}
 <script>
-    startLiveTimer("{{ active_attendance.check_in|date:'c' }}");
+    // Server er time ke local time e convert kore pathano
+    var serverTime = "{{ active_record.check_in|date:'Y-m-d H:i:s' }}";
+    startLiveTimer(serverTime);
 </script>
 {% endif %}
 
