@@ -3,48 +3,67 @@ from django.utils import timezone
 from .models import Site, Attendance
 from django.contrib.auth.decorators import login_required
 from datetime import timedelta
-from django.db.models import Q
+from django.db.models import Q, Sum, Count
+import csv
+from django.http import HttpResponse
+from .forms import ElegantUserCreationForm
+from django.contrib.auth import login
 
 @login_required
 def dashboard(request):
     active_attendance = Attendance.objects.filter(user=request.user, check_out__isnull=True).first()
-    sites = Site.objects.all()
+    sites = Site.objects.filter(user=request.user)
     
-    # Filter Logic
     filter_type = request.GET.get('range', 'all')
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
+    today_date = now.date()
+    
     query = Q(user=request.user, check_out__isnull=False)
     
     if filter_type == 'today':
-        query &= Q(check_in__date=now.date())
+        query &= Q(check_in__date=today_date)
     elif filter_type == 'weekly':
-        start_date = now.date() - timedelta(days=7)
-        query &= Q(check_in__date__gte=start_date)
+        query &= Q(check_in__date__gte=today_date - timedelta(days=7))
     elif filter_type == 'monthly':
-        start_date = now.date() - timedelta(days=30)
-        query &= Q(check_in__date__gte=start_date)
+        query &= Q(check_in__date__gte=today_date - timedelta(days=30))
+    elif filter_type == 'yearly':
+        query &= Q(check_in__date__gte=today_date - timedelta(days=365))
 
     history = Attendance.objects.filter(query).order_by('-check_in')
 
-  # --- TOTAL SUMMARY CALCULATION START ---
-total_active_seconds = 0
-for item in history:
-    if item.check_in and item.check_out:
-     
-        duration = (item.check_out - item.check_in).total_seconds()
-        
-        net_seconds = duration - item.total_break_seconds
-        
-        if net_seconds > 0:
-            total_active_seconds += net_seconds
+    site_segments_raw = Attendance.objects.filter(query).values('site__name').annotate(
+        total_count=Count('id'),
+        total_break_sec=Sum('total_break_seconds')
+    ).order_by('-total_count')
 
-if total_active_seconds < 0:
+    site_segments = []
+    for segment in site_segments_raw:
+     break_sec = segment['total_break_sec'] or 0
+     segment['total_break_min'] = round(break_sec / 60, 1)
+     site_segments.append(segment)
+
     total_active_seconds = 0
+    for item in history:
+        if item.check_in and item.check_out:
+            duration = (item.check_out - item.check_in).total_seconds()
+            net_seconds = duration - item.total_break_seconds
+            if net_seconds > 0:
+                total_active_seconds += net_seconds
 
-total_hours = int(total_active_seconds // 3600)
-total_minutes = int((total_active_seconds % 3600) // 60)
-summary_text = f"{total_hours}h {total_minutes}m"
-# --- TOTAL SUMMARY CALCULATION END ---
+    total_hours = int(total_active_seconds // 3600)
+    total_minutes = int((total_active_seconds % 3600) // 60)
+    summary_text = f"{total_hours}h {total_minutes}m"
+
+    context = {
+        'active_record': active_attendance,
+        'sites': sites,
+        'history': history,
+        'site_segments': site_segments, # আপডেট করা লিস্ট
+        'summary_text': summary_text,
+        'current_filter': filter_type,
+    }
+    return render(request, 'tracker/dashboard.html', context)
+
 @login_required
 def check_in(request):
     if request.method == 'POST':
@@ -59,14 +78,12 @@ def check_out(request):
     if request.method == 'POST':
         attendance = Attendance.objects.filter(user=request.user, check_out__isnull=True).first()
         if attendance:
-            # User jodi manual checkout time dey, sheta nibe, noile current time
             manual_time = request.POST.get('manual_checkout_time')
             if manual_time:
                 attendance.check_out = manual_time
             else:
                 attendance.check_out = timezone.now()
             
-            # Break check
             if attendance.break_start:
                 delta = attendance.check_out - attendance.break_start
                 attendance.total_break_seconds += int(delta.total_seconds())
@@ -97,7 +114,6 @@ def manual_entry(request):
         break_mins = int(request.POST.get('break_minutes') or 0)
         
         site = get_object_or_404(Site, id=site_id)
-        
         Attendance.objects.create(
             user=request.user,
             site=site,
@@ -106,31 +122,19 @@ def manual_entry(request):
             total_break_seconds=break_mins * 60
         )
     return redirect('dashboard')
-@login_required
-def add_site(request):
-    if request.method == 'POST':
-        name = request.POST.get('site_name')
-        if name:
-            Site.objects.create(name=name)
-    return redirect('dashboard')
-import csv
-from django.http import HttpResponse
 
 @login_required
 def export_attendance(request):
     filter_type = request.GET.get('range', 'all')
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
     query = Q(user=request.user, check_out__isnull=False)
     
     if filter_type == 'today':
         query &= Q(check_in__date=now.date())
     elif filter_type == 'weekly':
         query &= Q(check_in__date__gte=now.date() - timedelta(days=7))
-    elif filter_type == 'monthly':
-        query &= Q(check_in__date__gte=now.date() - timedelta(days=30))
 
     history = Attendance.objects.filter(query).order_by('-check_in')
-
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="attendance_{filter_type}.csv"'
 
@@ -138,21 +142,17 @@ def export_attendance(request):
     writer.writerow(['Site', 'Date', 'Check In', 'Check Out', 'Break (Sec)', 'Duration'])
 
     for row in history:
+        c_in = timezone.localtime(row.check_in)
+        c_out = timezone.localtime(row.check_out)
         writer.writerow([
             row.site.name, 
-            row.check_in.strftime('%Y-%m-%d'),
-            row.check_in.strftime('%H:%M'), 
-            row.check_out.strftime('%H:%M'), 
+            c_in.strftime('%Y-%m-%d'),
+            c_in.strftime('%H:%M'), 
+            c_out.strftime('%H:%M'), 
             row.total_break_seconds,
             row.get_duration()
         ])
-
     return response
-from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
-from .forms import ElegantUserCreationForm
-
 
 def signup(request):
     if request.method == 'POST':
@@ -164,3 +164,11 @@ def signup(request):
     else:
         form = ElegantUserCreationForm() 
     return render(request, 'tracker/signup.html', {'form': form})
+
+@login_required
+def add_site(request):
+    if request.method == 'POST':
+        name = request.POST.get('site_name')
+        if name:
+            Site.objects.create(name=name, user=request.user)
+    return redirect('dashboard')

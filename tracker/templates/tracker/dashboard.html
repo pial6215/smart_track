@@ -1,5 +1,5 @@
 {% load static %}
-{% load tz %} {# ১. টাইমজোন কনভারশনের জন্য এটি যোগ করা হয়েছে #}
+{% load tz %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,12 +12,12 @@
 <body>
 
 <div class="mobile-container">
-    <header style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+    <header style="margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
         <div>
             <h2 style="color: var(--primary); margin: 0; font-weight: 800; letter-spacing: -0.5px;">Smart Tracker</h2>
             <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 5px;">
                 <span style="display: inline-block; width: 6px; height: 6px; background: #10b981; border-radius: 50%;"></span>
-                Total Work: <b style="color: var(--text-main);">{{ total_summary }}</b>
+                Total Work: <b style="color: var(--text-main);">{{ summary_text }}</b>
             </p>
         </div>
 
@@ -28,96 +28,97 @@
             
             <form action="{% url 'logout' %}" method="post" style="margin: 0;">
                 {% csrf_token %}
-                <button type="submit" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; padding: 7px 12px; border-radius: 10px; font-size: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.5px;">
+                <button type="submit" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; padding: 7px 12px; border-radius: 10px; font-size: 10px; font-weight: 800; cursor: pointer;">
                     LOGOUT
                 </button>
             </form>
         </div>
     </header>
 
-    <div class="main-card" style="margin-bottom: 20px; padding: 15px; border: 1px dashed var(--primary);">
-        <h4 style="margin-bottom: 10px; font-size: 14px;">+ Register New Site</h4>
+    <div class="main-card" style="margin-bottom: 20px; padding: 15px; border: 1px dashed var(--primary); background: #f0f7ff;">
+        <h4 style="margin-bottom: 10px; font-size: 13px; color: var(--primary);">+ Register New Workplace</h4>
         <form action="{% url 'add_site' %}" method="POST" style="display: flex; gap: 8px;">
             {% csrf_token %}
-            <input type="text" name="site_name" placeholder="Enter Site Name (e.g. Uttara Project)" required style="margin-bottom: 0; flex: 1;">
-            <button type="submit" class="btn btn-primary" style="width: auto; padding: 0 15px;">ADD</button>
+            <input type="text" name="site_name" placeholder="Workplace Name" required style="margin-bottom: 0; flex: 1; height: 40px; font-size: 13px;">
+            <button type="submit" class="btn btn-primary" style="width: auto; padding: 0 15px; height: 40px;">ADD</button>
         </form>
     </div>
 
-    <div class="main-card">
+    <div class="main-card" style="position: relative; overflow: hidden;">
         {% if not active_record %}
             <h3 style="margin-bottom: 15px;">Start New Shift</h3>
             <form action="{% url 'check_in' %}" method="POST">
                 {% csrf_token %}
-                <select name="site" required>
+                <select name="site" required style="height: 45px;">
                     <option value="">Select Working Site</option>
                     {% for site in sites %}
                         <option value="{{ site.id }}">{{ site.name }}</option>
                     {% endfor %}
                 </select>
-                <button type="submit" class="btn btn-primary shadow-lg">CHECK IN</button>
+                <button type="submit" class="btn btn-primary shadow-lg" style="height: 45px; font-weight: 800;">CHECK IN</button>
             </form>
         {% else %}
-            <p style="color: #6b7280; font-size: 14px;">Currently at: <b>{{ active_record.site.name }}</b></p>
-            
-            <div class="timer-display" id="live-timer">
-                {% if active_record.break_start %} PAUSED {% else %} 00:00:00 {% endif %}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <p style="color: #6b7280; font-size: 13px; margin: 0;">At: <b style="color: var(--primary);">{{ active_record.site.name }}</b></p>
+                {% if active_record.break_start %}
+                    <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800;">ON BREAK</span>
+                {% else %}
+                    <span style="background: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800;">ACTIVE</span>
+                {% endif %}
             </div>
             
-            <div class="grid" style="margin-bottom: 15px;">
+            <div class="timer-display" id="live-timer" style="font-size: 42px; margin-bottom: 5px;">00:00:00</div>
+
+            {% if active_record.break_start %}
+            <div id="break-timer-container" style="text-align: center; margin-bottom: 20px; background: #fffbeb; padding: 10px; border-radius: 12px; border: 1px solid #fef3c7;">
+                <p style="font-size: 11px; color: #92400e; margin-bottom: 2px; font-weight: 600;">BREAK DURATION</p>
+                <div id="break-live-timer" style="font-size: 20px; color: #f59e0b; font-weight: 800;">00:00:00</div>
+            </div>
+            {% endif %}
+            
+            <div class="grid" style="gap: 10px; margin-bottom: 15px;">
                 <form action="{% url 'toggle_break' %}" method="POST">
                     {% csrf_token %}
-                    <button type="submit" class="btn {% if active_record.break_start %}btn-warning{% else %}btn-outline{% endif %}">
+                    <button type="submit" class="btn {% if active_record.break_start %}btn-warning{% else %}btn-outline{% endif %}" style="height: 45px; font-weight: 700;">
                         {% if active_record.break_start %}End Break{% else %}Take Break{% endif %}
                     </button>
                 </form>
 
                 <form action="{% url 'check_out' %}" method="POST">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">CHECK OUT</button>
-                </form>
-            </div>
-
-            <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 10px;">
-                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-align: left;">Forgot to checkout? Set time manually:</p>
-                <form action="{% url 'check_out' %}" method="POST">
-                    {% csrf_token %}
-                    <input type="datetime-local" name="manual_checkout_time" style="font-size: 12px; margin-bottom: 10px;">
-                    <button type="submit" class="btn btn-outline" style="font-size: 13px; padding: 10px;">MANUAL CHECKOUT</button>
+                    <button type="submit" class="btn btn-danger" style="height: 45px; font-weight: 700;">CHECK OUT</button>
                 </form>
             </div>
         {% endif %}
     </div>
 
-    <button onclick="document.getElementById('m-form').classList.toggle('show-form')" class="btn btn-outline" style="margin: 10px 0 20px 0; border: 1px dashed #aaa;">
-        + Add Past Record
-    </button>
-
-    <div id="m-form" class="manual-form">
-        <h4 style="margin-bottom: 15px;">Add Past Record</h4>
-        <form action="{% url 'manual_entry' %}" method="POST">
-            {% csrf_token %}
-            <select name="site" required>
-                {% for site in sites %}
-                    <option value="{{ site.id }}">{{ site.name }}</option>
-                {% endfor %}
-            </select>
-            <label style="display:block; text-align:left; font-size:11px; margin-bottom: 5px;">Check In</label>
-            <input type="datetime-local" name="check_in" style="margin-bottom:15px;" required>
-            
-            <label style="display:block; text-align:left; font-size:11px; margin-bottom: 5px;">Check Out</label>
-            <input type="datetime-local" name="check_out" style="margin-bottom:15px;" required>
-            
-            <input type="number" name="break_minutes" placeholder="Break mins (optional)">
-            
-            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Save Entry</button>
-        </form>
+    <div class="main-card" style="margin-top: 20px; background: #f8fafc; border: 1px solid #e2e8f0;">
+        <h3 style="font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+             Workplace Summary ({{ current_filter|title }})
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            {% for segment in site_segments %}
+            <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px; border-radius: 12px; border: 1px solid #edf2f7;">
+                <div>
+                    <strong style="color: #1e293b; font-size: 14px;">{{ segment.site__name }}</strong>
+                    <p style="font-size: 11px; color: #64748b; margin: 0;">Visits: <b>{{ segment.total_count }}</b></p>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 11px; font-weight: 700; color: #f59e0b; background: #fffbeb; padding: 4px 8px; border-radius: 6px;">
+                        Break: {{ segment.total_break_min|default:0 }} min
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <p style="font-size: 12px; color: #94a3b8; text-align: center;">No summary available.</p>
+            {% endfor %}
+        </div>
     </div>
 
-    <div class="history-section">
+    <div class="history-section" style="margin-top: 25px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0;">History</h3>
-            <a href="{% url 'export_attendance' %}?range={{ current_filter }}" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: bold;">📥 CSV</a>
+            <h3 style="margin: 0; font-size: 18px;">Detailed Logs</h3>
+            <a href="{% url 'export_attendance' %}?range={{ current_filter }}" style="font-size: 12px; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; color: var(--primary); text-decoration: none; font-weight: 800; border: 1px solid #e2e8f0;">📥 EXPORT CSV</a>
         </div>
         
         <div class="filter-nav">
@@ -127,24 +128,30 @@
             <a href="?range=monthly" class="filter-btn {% if current_filter == 'monthly' %}active{% endif %}">Monthly</a>
         </div>
 
-        {% timezone "Asia/Dhaka" %} {# ২. হিস্ট্রি ডাটা ঢাকা সময়ে দেখানোর জন্য এটি যোগ করা হয়েছে #}
+        {% timezone "Asia/Dhaka" %}
             {% for item in history %}
-            <div class="history-card">
+            <div class="history-card" style="padding: 15px; margin-bottom: 12px; background: white; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid #f1f5f9;">
                 <div class="history-info">
-                    <h4>{{ item.site.name }}</h4>
-                    <p>{{ item.check_in|date:"d M, Y" }} | {{ item.check_in|time:"H:i" }} - {{ item.check_out|time:"H:i" }}</p>
-                    {% if item.total_break_seconds > 0 %}
-                        <p style="font-size: 10px; color: #f59e0b; font-weight: 600;">
-                           Break: {{ item.get_break_minutes }} mins
-                        </p>
-                    {% endif %}
+                    <h4 style="margin-bottom: 5px; color: #1e293b;">{{ item.site.name }}</h4>
+                    <p style="font-size: 12px; color: #64748b;">{{ item.check_in|date:"d M" }} | {{ item.check_in|time:"H:i" }} - {{ item.check_out|time:"H:i" }}</p>
+                    
+                   {% if item.total_break_seconds > 0 %}
+                      <div style="display: flex; align-items: center; gap: 5px; margin-top: 6px;">
+                     <span style="width: 4px; height: 4px; background: #f59e0b; border-radius: 50%;"></span>
+                     <span style="font-size: 10px; color: #f59e0b; font-weight: 700;">
+                       Break: {{ item.get_break_minutes }} min
+                     </span>
+                     </div>
+                   {% endif %}
                 </div>
-                <div class="duration-tag">
+                <div class="duration-tag" style="background: #eff6ff; color: #2563eb; font-weight: 800; font-size: 12px; padding: 6px 12px; border-radius: 10px;">
                     {{ item.get_duration }}
                 </div>
             </div>
             {% empty %}
-            <p style="text-align: center; color: #9ca3af; margin-top: 30px; font-size: 14px;">No records found.</p>
+            <div style="text-align: center; padding: 40px 20px;">
+                <p style="color: #94a3b8; font-size: 14px;">No records in this period.</p>
+            </div>
             {% endfor %}
         {% endtimezone %}
     </div>
@@ -152,12 +159,19 @@
 
 <script src="{% static 'tracker/js/script.js' %}"></script>
 
-{% if active_record and not active_record.break_start %}
 <script>
-    // ৩. 'date:c' ফরম্যাট ব্যবহার করা হয়েছে যাতে JavaScript অটোমেটিক টাইমজোন চেনে
-    startLiveTimer("{{ active_record.check_in|date:'c' }}");
-</script>
-{% endif %}
+    // User Identity for JS (Requirement: Security/Privacy)
+    const currentUser = "{{ request.user.username }}";
 
+    {% if active_record %}
+        {% if active_record.break_start %}
+            // Start Break Timer
+            startBreakTimer("{{ active_record.break_start|date:'c' }}");
+        {% else %}
+            // Start Main Timer
+            startLiveTimer("{{ active_record.check_in|date:'c' }}");
+        {% endif %}
+    {% endif %}
+</script>
 </body>
 </html>

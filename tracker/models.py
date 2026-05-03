@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 class Site(models.Model):
+    # ১. User-এর সাথে সম্পর্ক তৈরি করা হয়েছে যাতে একজনের সাইট অন্যজন না দেখে
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
 
     def __str__(self):
@@ -21,13 +23,9 @@ class Attendance(models.Model):
     def get_duration(self):
         """Kajer prokrito somoy (Net Duration) calculate kore"""
         if self.check_in and self.check_out:
-            # Pura somoy (Checkout - Checkin)
             total_seconds = int((self.check_out - self.check_in).total_seconds())
-            
-            # Break-er somoy bad deya
             active_seconds = total_seconds - self.total_break_seconds
             
-            # Duration jeno vul kromeo negative na hoy
             if active_seconds < 0: 
                 active_seconds = 0
             
@@ -41,7 +39,6 @@ class Attendance(models.Model):
         """Break seconds ke minute-e convert kore"""
         if self.total_break_seconds > 0:
             minutes = self.total_break_seconds // 60
-            # Jodi 1 minute-er kom break hoy kintu 0 noy, tobe 1m dekhabe
             if minutes == 0 and self.total_break_seconds > 0:
                 return "1"
             return f"{minutes}"
