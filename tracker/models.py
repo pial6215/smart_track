@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 class Site(models.Model):
-    # ১. User-এর সাথে সম্পর্ক তৈরি করা হয়েছে যাতে একজনের সাইট অন্যজন না দেখে
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
 

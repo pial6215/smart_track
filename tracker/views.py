@@ -31,6 +31,7 @@ def dashboard(request):
 
     history = Attendance.objects.filter(query).order_by('-check_in')
 
+  
     site_segments_raw = Attendance.objects.filter(query).values('site__name').annotate(
         total_count=Count('id'),
         total_break_sec=Sum('total_break_seconds')
@@ -38,17 +39,33 @@ def dashboard(request):
 
     site_segments = []
     for segment in site_segments_raw:
-     break_sec = segment['total_break_sec'] or 0
-     segment['total_break_min'] = round(break_sec / 60, 1)
-     site_segments.append(segment)
+        break_sec = segment['total_break_sec'] or 0
+        segment['total_break_min'] = round(break_sec / 60, 1)
+        site_segments.append(segment)
 
     total_active_seconds = 0
+    
+
     for item in history:
         if item.check_in and item.check_out:
             duration = (item.check_out - item.check_in).total_seconds()
             net_seconds = duration - item.total_break_seconds
             if net_seconds > 0:
                 total_active_seconds += net_seconds
+
+ 
+    if active_attendance:
+     
+        elapsed = (timezone.now() - active_attendance.check_in).total_seconds()
+        
+  
+        running_break_sec = 0
+        if active_attendance.break_start:
+            running_break_sec = (timezone.now() - active_attendance.break_start).total_seconds()
+            
+        net_active_sec = elapsed - active_attendance.total_break_seconds - running_break_sec
+        if net_active_sec > 0:
+            total_active_seconds += net_active_sec
 
     total_hours = int(total_active_seconds // 3600)
     total_minutes = int((total_active_seconds % 3600) // 60)
@@ -58,7 +75,7 @@ def dashboard(request):
         'active_record': active_attendance,
         'sites': sites,
         'history': history,
-        'site_segments': site_segments, # আপডেট করা লিস্ট
+        'site_segments': site_segments,
         'summary_text': summary_text,
         'current_filter': filter_type,
     }
@@ -78,16 +95,18 @@ def check_out(request):
     if request.method == 'POST':
         attendance = Attendance.objects.filter(user=request.user, check_out__isnull=True).first()
         if attendance:
+          
+            now_time = timezone.now()
+            if attendance.break_start:
+                delta = now_time - attendance.break_start
+                attendance.total_break_seconds += int(delta.total_seconds())
+                attendance.break_start = None
+            
             manual_time = request.POST.get('manual_checkout_time')
             if manual_time:
                 attendance.check_out = manual_time
             else:
-                attendance.check_out = timezone.now()
-            
-            if attendance.break_start:
-                delta = attendance.check_out - attendance.break_start
-                attendance.total_break_seconds += int(delta.total_seconds())
-                attendance.break_start = None
+                attendance.check_out = now_time
             
             attendance.save()
     return redirect('dashboard')
@@ -97,8 +116,10 @@ def toggle_break(request):
     attendance = Attendance.objects.filter(user=request.user, check_out__isnull=True).first()
     if attendance:
         if not attendance.break_start:
+         
             attendance.break_start = timezone.now()
         else:
+            # ব্রেক শেষ - সময় হিসেব করে জমা করা
             delta = timezone.now() - attendance.break_start
             attendance.total_break_seconds += int(delta.total_seconds())
             attendance.break_start = None

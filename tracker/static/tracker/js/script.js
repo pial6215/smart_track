@@ -1,13 +1,16 @@
-// ১. মেইন কাজের টাইমার (Check-in Timer)
-function startLiveTimer(checkInTimeStr) {
+// ১. মেইন কাজের টাইমার (Check-in Timer) - আপডেট করা হয়েছে
+function startLiveTimer(checkInTimeStr, savedBreaksSec = 0) {
     const display = document.getElementById('live-timer');
     if (!display) return;
 
     const checkInTime = new Date(checkInTimeStr).getTime();
+    // savedBreaksSec কে মিলিসেকেন্ডে রূপান্তর করছি
+    const totalBreakMs = savedBreaksSec * 1000;
 
     function updateTimer() {
         const now = new Date().getTime();
-        let diff = now - checkInTime;
+        // সূত্র: (বর্তমান সময় - চেকইন সময়) - মোট ব্রেক সময়
+        let diff = (now - checkInTime) - totalBreakMs;
         const activeDiff = diff < 0 ? 0 : diff;
 
         const hours = Math.floor(activeDiff / (1000 * 60 * 60));
@@ -22,7 +25,7 @@ function startLiveTimer(checkInTimeStr) {
     setInterval(updateTimer, 1000);
 }
 
-// ২. ব্রেক টাইমার (Break Countdown Timer)
+// ২. ব্রেক টাইমার (Break Countdown Timer) - আগের মতোই আছে
 function startBreakTimer(breakStartTimeStr) {
     const display = document.getElementById('break-live-timer');
     if (!display) return;
@@ -46,7 +49,7 @@ function startBreakTimer(breakStartTimeStr) {
     setInterval(updateBreak, 1000);
 }
 
-// ৩. ম্যানুয়াল ফরম টগল করার ফাংশন
+// ৩. ম্যানুয়াল ফরম টগল করার ফাংশন - অপরিবর্তিত
 function toggleManualForm() {
     const form = document.getElementById('m-form');
     if (form) {

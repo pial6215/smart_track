@@ -160,16 +160,28 @@
 <script src="{% static 'tracker/js/script.js' %}"></script>
 
 <script>
-    // User Identity for JS (Requirement: Security/Privacy)
-    const currentUser = "{{ request.user.username }}";
-
     {% if active_record %}
         {% if active_record.break_start %}
-            // Start Break Timer
+         
+            const checkIn = new Date("{{ active_record.check_in|date:'c' }}").getTime();
+            const breakStart = new Date("{{ active_record.break_start|date:'c' }}").getTime();
+            const savedBreaks = {{ active_record.total_break_seconds|default:0 }} * 1000;
+            
+            let staticDiff = (breakStart - checkIn) - savedBreaks;
+            if (staticDiff < 0) staticDiff = 0;
+            
+            const h = Math.floor(staticDiff / 3600000);
+            const m = Math.floor((staticDiff % 3600000) / 60000);
+            const s = Math.floor((staticDiff % 60000) / 1000);
+            
+            document.getElementById('live-timer').innerText = 
+                `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+          
             startBreakTimer("{{ active_record.break_start|date:'c' }}");
         {% else %}
-            // Start Main Timer
-            startLiveTimer("{{ active_record.check_in|date:'c' }}");
+           
+            startLiveTimer("{{ active_record.check_in|date:'c' }}", {{ active_record.total_break_seconds|default:0 }});
         {% endif %}
     {% endif %}
 </script>

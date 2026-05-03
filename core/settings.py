@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-unjq-f+f_2=85jz+ag-oonk0y+wq=wek&0$cwp90t_0#=#$*9k'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # core/settings.py
 ALLOWED_HOSTS = ['abirpial.pythonanywhere.com', '127.0.0.1']
@@ -77,11 +77,17 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'smart_tracker_db',     
+        'USER': 'root',               
+        'PASSWORD': '',   
+        'HOST': '127.0.0.1',          
+        'PORT': '3306',                
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -114,3 +120,15 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
+from django.db.backends.mysql.base import DatabaseWrapper
+DatabaseWrapper.display_name = 'MariaDB'
+import django
+from django.db.backends.mysql.base import DatabaseWrapper as MySQLDatabaseWrapper
+MySQLDatabaseWrapper.mysql_version = (10, 6, 0)
+
+from django.db.backends.mysql.features import DatabaseFeatures
+
+
+DatabaseFeatures.can_return_rows_from_bulk_insert = property(lambda x: False)
+DatabaseFeatures.has_select_for_update_skip_locked = property(lambda x: False)
+DatabaseFeatures.can_return_columns_from_insert = property(lambda x: False)
