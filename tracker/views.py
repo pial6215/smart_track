@@ -119,7 +119,6 @@ def toggle_break(request):
          
             attendance.break_start = timezone.now()
         else:
-            # ব্রেক শেষ - সময় হিসেব করে জমা করা
             delta = timezone.now() - attendance.break_start
             attendance.total_break_seconds += int(delta.total_seconds())
             attendance.break_start = None
@@ -175,13 +174,15 @@ def export_attendance(request):
         ])
     return response
 
+from django.contrib import messages 
+
 def signup(request):
     if request.method == 'POST':
         form = ElegantUserCreationForm(request.POST) 
         if form.is_valid():
             user = form.save()
-            login(request, user)
-            return redirect('dashboard')
+            messages.success(request, 'Registration successful! Please login to start your shift.')
+            return redirect('login') 
     else:
         form = ElegantUserCreationForm() 
     return render(request, 'tracker/signup.html', {'form': form})
