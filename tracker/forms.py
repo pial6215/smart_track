@@ -8,7 +8,6 @@ class ElegantUserCreationForm(UserCreationForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # We loop through fields and remove help_text so the list disappears
         for field in self.fields.values():
             field.help_text = None
 
